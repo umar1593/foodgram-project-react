@@ -1,5 +1,5 @@
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import serializers
 from users.models import User
 
@@ -42,7 +42,7 @@ class IngredientRecipeSerializer(serializers.HyperlinkedModelSerializer):
     )
 
     class Meta:
-        model = IngredientRecipe
+        model = RecipeIngredient
         fields = ("id", "name", "measurement_unit", "amount")
 
 
@@ -51,7 +51,7 @@ class IngredientCreateRecipeSerializer(serializers.ModelSerializer):
     amount = serializers.IntegerField(min_value=1)
 
     class Meta:
-        model = IngredientRecipe
+        model = RecipeIngredient
         fields = ("id", "amount")
 
 
@@ -119,7 +119,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 )
             except serializers.ValidationError:
                 raise serializers.ValidationError("Miss ingredient")
-            IngredientRecipe.objects.create(
+            RecipeIngredient.objects.create(
                 recipe=recipe,
                 amount=ingredient_data["amount"],
                 ingredient=ingredient_current,
@@ -140,7 +140,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             instance.tags.clear()
             instance.tags.add(*tags)
         ingredients_data = validated_data.pop("related_ingredients")
-        IngredientRecipe.objects.filter(recipe=instance).delete()
+        RecipeIngredient.objects.filter(recipe=instance).delete()
         self.parse_ingredients(instance, ingredients_data)
         super().update(instance, validated_data)
         return instance

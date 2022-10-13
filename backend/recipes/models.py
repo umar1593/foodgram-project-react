@@ -35,7 +35,7 @@ class Recipe(models.Model):
         verbose_name="Время приготовления"
     )
     ingredients = models.ManyToManyField(
-        Ingredient, through="IngredientRecipe", verbose_name="Ингредиенты"
+        Ingredient, through="RecipeIngredient", verbose_name="Ингредиенты"
     )
     tags = models.ManyToManyField("Tag", verbose_name="Тэги")
 
@@ -147,7 +147,7 @@ class ShoppingList(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["customer", "cart"], name="unique_cart"
+                fields=["author", "cart"], name="unique_cart"
             )
         ]
         verbose_name = "Список покупок"

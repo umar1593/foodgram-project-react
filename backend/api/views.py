@@ -2,15 +2,22 @@ from django.db.models import Exists, OuterRef, Sum
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjoserUserViewSet
-
+from recipes.models import (
+    Favorite,
+    Ingredient,
+    Recipe,
+    ShoppingList,
+    Subscribe,
+    Tag,
+)
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from users.models import User
 
 from .filters import IngredientFilter, RecipeFilter
-from .paginators import PageNumberPaginatorCustom
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (
     IngredientSerializer,
@@ -19,15 +26,6 @@ from .serializers import (
     SubscriptionsSerializer,
     TagSerializer,
 )
-from recipes.models import (
-    Favorite,
-    Ingredient,
-    Recipe,
-    ShopingCart,
-    Subscribe,
-    Tag,
-)
-from users.models import CustomUser
 
 
 class UserViewSet(DjoserUserViewSet):
@@ -76,7 +74,7 @@ class UserViewSet(DjoserUserViewSet):
     )
     def subscriptions(self, request):
         user = request.user
-        follows = CustomUser.objects.filter(follower__following=user)
+        follows = User.objects.filter(follower__following=user)
         page = self.paginate_queryset(follows)
         if page is not None:
             serializer = SubscriptionsSerializer(page, many=True)
@@ -110,7 +108,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = [IsAuthorOrReadOnly]
-    pagination_class = PageNumberPaginatorCustom
     ordering = ("-pub_date",)
 
     def get_queryset(self):
@@ -119,7 +116,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             .get_queryset()
             .annotate(
                 is_in_shopping_cart=Exists(
-                    ShopingCart.objects.filter(
+                    ShoppingList.objects.filter(
                         customer=self.request.user.id, cart_id=OuterRef("pk")
                     )
                 ),
@@ -168,13 +165,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk=None):
         user = request.user
         obj = self.get_object()
-        in_cart = ShopingCart.objects.filter(customer=user, cart=obj).exists()
+        in_cart = ShoppingList.objects.filter(author=user, cart=obj).exists()
         if request.method == "GET" and not in_cart:
-            ShopingCart.objects.create(customer=user, cart=obj)
+            ShoppingList.objects.create(customer=user, cart=obj)
             serializer = self.get_serializer(obj)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE" and in_cart:
-            ShopingCart.objects.filter(customer=user, cart=obj).delete()
+            ShoppingList.objects.filter(author=user, cart=obj).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {"error": "Is not Authenticated."},
@@ -186,15 +183,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         user = request.user
-        in_cart = Recipe.objects.filter(cart__customer=user)
+        in_cart = Recipe.objects.filter(cart__author=user)
         queryset = in_cart.values_list(
-            "ingredients__name",
-            "ingredients__measurement_unit"
-        ).annotate(
-            amount_sum=Sum(
-                "related_ingredients__amount"
-            )
-        )
+            "ingredients__name", "ingredients__measurement_unit"
+        ).annotate(amount_sum=Sum("related_ingredients__amount"))
         text = "Ваш список покупок: \n"
         for ingredient in queryset:
             text += (

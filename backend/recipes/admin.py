@@ -38,6 +38,10 @@ class RecipeAdmin(admin.ModelAdmin):
         "name",
         "author",
     )
+    search_fields = (
+        "name",
+        "author",
+    )
     list_filter = ("name", "author", "tags")
     readonly_fields = ("favorites_count",)
     inlines = [RecipeIngredientInline]
