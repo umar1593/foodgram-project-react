@@ -1,97 +1,49 @@
 from django.contrib import admin
 
-from .models import (
-    Favorite,
-    Ingredient,
-    Recipe,
-    RecipeIngredient,
-    ShoppingList,
-    Subscribe,
-    Tag,
-)
+from .models import Ingredient, Recipe, RecipeIngredient, Tag
 
 
 @admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = ("name", "measurement_unit")
-    search_fields = ("name", "measurement_unit")
-    list_filter = ("name",)
-
-
-class RecipeIngredientInline(admin.TabularInline):
-    model = RecipeIngredient
-    extra = 1
-
-
-@admin.register(Recipe)
-class RecipeAdmin(admin.ModelAdmin):
-    fields = (
-        "author",
-        "name",
-        "text",
-        "tags",
-        "image",
-        "cooking_time",
-        "favorites_count",
-    )
     list_display = (
-        "name",
-        "author",
+        'name',
+        'measurement_unit',
     )
-    search_fields = (
-        "name",
-        "author",
-    )
-    list_filter = ("name", "author", "tags")
-    readonly_fields = ("favorites_count",)
-    inlines = [RecipeIngredientInline]
-    autocomplete_fields = ("author",)
-
-    def favorites_count(self, obj):
-        return Favorite.objects.filter(favorite=obj).count()
+    list_filter = ('name',)
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "color")
-
-
-@admin.register(Favorite)
-class FavoriteAdmin(admin.ModelAdmin):
     list_display = (
-        "user",
-        "favorite",
+        'name',
+        'color',
+        'slug',
     )
-    autocomplete_fields = (
-        "user",
-        "favorite",
-    )
+    list_filter = ('name',)
 
 
-@admin.register(RecipeIngredient)
-class RecipeIngredientAdmin(admin.ModelAdmin):
-    autocomplete_fields = ["ingredient", "recipe"]
+class RecipeIngredientInline(admin.TabularInline):
+    model = RecipeIngredient
+    min_num = 1
 
 
-@admin.register(Subscribe)
-class SubscribeAdmin(admin.ModelAdmin):
+@admin.register(Recipe)
+class RecipeAdmin(admin.ModelAdmin):
+    inlines = (RecipeIngredientInline,)
     list_display = (
-        "author",
-        "follower",
+        'id',
+        'name',
+        'author',
+        'cooking_time',
+        'pub_date',
     )
-    autocomplete_fields = (
-        "author",
-        "follower",
+    list_filter = (
+        'name',
+        'author',
+        'tags',
     )
+    empty_value_display = '-пусто-'
 
-
-@admin.register(ShoppingList)
-class ShoppingListAdmin(admin.ModelAdmin):
-    list_display = (
-        "author",
-        "cart",
-    )
-    autocomplete_fields = (
-        "author",
-        "cart",
-    )
+    @admin.display(description='В избранном')
+    def get_favorite_count(self, obj):
+        return obj.favorite_recipe.count()

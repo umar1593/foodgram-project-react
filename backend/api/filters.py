@@ -1,33 +1,58 @@
-from django_filters import AllValuesMultipleFilter, CharFilter, FilterSet
-from django_filters import rest_framework as filters
-
+import django_filters as filters
+from django.core.exceptions import ValidationError
 from recipes.models import Ingredient, Recipe
+from users.models import User
 
 
-class RecipeFilter(FilterSet):
-    tags = AllValuesMultipleFilter(field_name="tags__slug")
-    is_in_shopping_cart = filters.BooleanFilter(
-        field_name="is_in_shopping_cart", method="filter"
-    )
-    is_favorited = filters.BooleanFilter(
-        field_name="is_favorited", method="filter"
-    )
-
-    def filter(self, qs, name, value):
-        if self.request.query_params.get("is_favorited"):
-            qs = qs.filter(favorite__user=self.request.user)
-        if self.request.query_params.get("is_in_shopping_cart"):
-            qs = qs.filter(cart__customer=self.request.user)
-        return qs
-
-    class Meta:
-        model = Recipe
-        fields = ["tags", "author", "is_favorited", "is_in_shopping_cart"]
+class TagsMultipleChoiceField(filters.fields.MultipleChoiceField):
+    def validate(self, value):
+        if self.required and not value:
+            raise ValidationError(
+                self.error_messages['required'], code='required'
+            )
+        for val in value:
+            if val in self.choices and not self.valid_value(val):
+                raise ValidationError(
+                    self.error_messages['invalid_choice'],
+                    code='invalid_choice',
+                    params={'value': val},
+                )
 
 
-class IngredientFilter(FilterSet):
-    name = CharFilter(field_name="name", lookup_expr="icontains")
+class TagsFilter(filters.AllValuesMultipleFilter):
+    field_class = TagsMultipleChoiceField
+
+
+class IngredientFilter(filters.FilterSet):
+    name = filters.CharFilter(lookup_expr='istartswith')
 
     class Meta:
         model = Ingredient
-        fields = ("name",)
+        fields = ('name',)
+
+
+class RecipeFilter(filters.FilterSet):
+    author = filters.ModelChoiceFilter(queryset=User.objects.all())
+    is_in_shopping_cart = filters.BooleanFilter(
+        widget=filters.widgets.BooleanWidget(), label='В корзине.'
+    )
+    is_favorited = filters.BooleanFilter(
+        widget=filters.widgets.BooleanWidget(), label='В избранных.'
+    )
+    tags = TagsFilter(field_name='tags__slug', label='Ссылка')
+
+    class Meta:
+        model = Recipe
+        fields = ['is_favorited', 'is_in_shopping_cart', 'author', 'tags']
+
+    def get_is_favorited(self, queryset, name, data):
+        if data and not self.request.user.is_anonymous:
+            return queryset.filter(favorite_recipe__user=self.request.user)
+        return queryset
+
+    def get_is_in_shopping_cart(self, queryset, name, data):
+        if data and not self.request.user.is_anonymous:
+            return queryset.filter(
+                shopping_cart_recipe__user=self.request.user
+            )
+        return queryset
