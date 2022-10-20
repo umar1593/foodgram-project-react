@@ -1,6 +1,7 @@
 from drf_base64.fields import Base64ImageField
-from recipes.models import Follow, Ingredient, Recipe, RecipeIngredient, Tag
 from rest_framework import serializers
+
+from recipes.models import Follow, Ingredient, Recipe, RecipeIngredient, Tag
 from users.models import User
 
 
@@ -101,7 +102,7 @@ class AmountIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipesCreateSerializer(serializers.ModelSerializer):
-    ingredients = AmountIngredientSerializer(many=True)
+    ingredients = AmountIngredientSerializer(many=True, source='ingredient')
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
@@ -144,6 +145,21 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         serializer = RecipesListSerializer(instance)
         return serializer.data
+
+    def validate(self, data):
+        ingredients = []
+        for ingredient in data['ingredient']:
+            if ingredient['ingredient']['id'] not in ingredients:
+                ingredients.append(ingredient['ingredient']['id'])
+            else:
+                raise serializers.ValidationError('Ингредиенты повторяются!')
+        tags = []
+        for tag in data['tags']:
+            if tag not in tags:
+                tags.append(tag)
+            else:
+                raise serializers.ValidationError('Тэги повторяются!')
+        return data
 
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):
