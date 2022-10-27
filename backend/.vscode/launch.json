@@ -15,7 +15,7 @@
             "django": true,
             "justMyCode": false,
             "cwd": "${workspaceFolder}"
-        }
+        },
         {
             "name": "Shell",
             "type": "python",
