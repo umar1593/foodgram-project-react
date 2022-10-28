@@ -2,31 +2,19 @@ from django.db.models import Exists, OuterRef, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
-from recipes.models import (
-    FavoriteRecipe,
-    Follow,
-    Ingredient,
-    Recipe,
-    RecipeIngredient,
-    ShoppingCart,
-    Tag,
-)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
-from users.models import User
 
 from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsOwnerOrReadOnly
-from api.serializers import (
-    FollowSerializer,
-    IngredientSerializer,
-    RecipesCreateSerializer,
-    RecipesListSerializer,
-    TagSerializer,
-    UserSerializer,
-)
+from api.serializers import (FollowSerializer, IngredientSerializer,
+                             RecipesCreateSerializer, RecipesListSerializer,
+                             TagSerializer, UserSerializer)
+from recipes.models import (FavoriteRecipe, Follow, Ingredient, Recipe,
+                            RecipeIngredient, ShoppingCart, Tag)
+from users.models import User
 
 # from api.utils import CreateDeleteMixin
 
@@ -59,14 +47,11 @@ class UsersViewSet(UserViewSet):
                     {'errors': 'Вы не можете подписаться на себя'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            else:
-                serializer = FollowSerializer(
-                    Follow.objects.create(user=request.user, author=author),
-                    context={'request': request},
-                )
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
-                )
+            serializer = FollowSerializer(
+                Follow.objects.create(user=request.user, author=author),
+                context={'request': request},
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif request.method == 'DELETE':
             if Follow.objects.filter(
                 user=request.user, author=author
@@ -75,11 +60,10 @@ class UsersViewSet(UserViewSet):
                     user=request.user, author=author
                 ).delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
-            else:
-                return Response(
-                    {'errors': 'Нет такой подписки!'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            return Response(
+                {'errors': 'Нет такой подписки!'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class TagViewSet(viewsets.ModelViewSet):
