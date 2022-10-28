@@ -22,8 +22,7 @@ class CreateDeleteMixin:
                     user=self.request.user, recipe=recipe
                 ).delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
-            else:
-                return Response(
-                    {'errors': 'Рецепт отсутсвует в списке покупок'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            return Response(
+                {'errors': 'Рецепт отсутсвует в списке покупок'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
