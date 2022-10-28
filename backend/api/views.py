@@ -52,7 +52,7 @@ class UsersViewSet(UserViewSet):
                 context={'request': request},
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             if Follow.objects.filter(
                 user=request.user, author=author
             ).exists():
