@@ -1,7 +1,6 @@
 from drf_base64.fields import Base64ImageField
-from rest_framework import serializers
-
 from recipes.models import Follow, Ingredient, Recipe, RecipeIngredient, Tag
+from rest_framework import serializers
 from users.models import User
 
 
@@ -102,7 +101,7 @@ class AmountIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipesCreateSerializer(serializers.ModelSerializer):
-    ingredients = AmountIngredientSerializer(many=True, source='ingredient')
+    ingredients = AmountIngredientSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
         queryset=Tag.objects.all(), many=True
     )
