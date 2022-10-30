@@ -146,21 +146,6 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
         serializer = RecipesListSerializer(instance)
         return serializer.data
 
-    def validate(self, data):
-        ingredients = []
-        for ingredient in data['ingredients']:
-            if ingredient['ingredients']['id'] not in ingredients:
-                ingredients.append(ingredient['ingredients']['id'])
-            else:
-                raise serializers.ValidationError('Ингредиенты повторяются!')
-        tags = []
-        for tag in data['tags']:
-            if tag not in tags:
-                tags.append(tag)
-            else:
-                raise serializers.ValidationError('Тэги повторяются!')
-        return data
-
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):
     class Meta:
