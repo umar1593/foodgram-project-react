@@ -148,7 +148,7 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         ingredients = []
-        for ingredient in data['ingredient']:
+        for ingredient in data['ingredients']:
             if ingredient['ingredient']['id'] not in ingredients:
                 ingredients.append(ingredient['ingredient']['id'])
             else:
