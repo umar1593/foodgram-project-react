@@ -149,8 +149,8 @@ class RecipesCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         ingredients = []
         for ingredient in data['ingredients']:
-            if ingredient['ingredient']['id'] not in ingredients:
-                ingredients.append(ingredient['ingredient']['id'])
+            if ingredient['ingredients']['id'] not in ingredients:
+                ingredients.append(ingredient['ingredients']['id'])
             else:
                 raise serializers.ValidationError('Ингредиенты повторяются!')
         tags = []
