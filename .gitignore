@@ -98,3 +98,4 @@ dmypy.json
 
 media/
 static/
+.vscode/
