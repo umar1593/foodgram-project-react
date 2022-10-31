@@ -131,8 +131,8 @@ class RecipesViewSet(CreateDeleteMixin, viewsets.ModelViewSet):
         detail=True,
         permission_classes=(IsAuthenticated,),
     )
-    def favorite(self, request):
-        self.add_delete_recipe_to(self, request, FavoriteRecipe, pk=None)
+    def favorite(self, request, pk=None):
+        self.add_delete_recipe_to(self, request, FavoriteRecipe)
 
     @action(
         methods=['POST', 'DELETE'],
