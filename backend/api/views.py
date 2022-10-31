@@ -20,6 +20,7 @@ from users.models import User
 from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsOwnerOrReadOnly
 from api.serializers import (
+    FavoriteRecipeSerializer,
     FollowSerializer,
     IngredientSerializer,
     RecipesCreateSerializer,
@@ -27,7 +28,6 @@ from api.serializers import (
     TagSerializer,
     UserSerializer,
 )
-from api.utils import CreateDeleteMixin
 
 
 class UsersViewSet(UserViewSet):
@@ -90,7 +90,7 @@ class IngredientsViewSet(viewsets.ModelViewSet):
     filter_class = IngredientFilter
 
 
-class RecipesViewSet(CreateDeleteMixin, viewsets.ModelViewSet):
+class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     filter_class = RecipeFilter
     permission_classes = (IsOwnerOrReadOnly,)
@@ -132,7 +132,7 @@ class RecipesViewSet(CreateDeleteMixin, viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def favorite(self, request, pk=None):
-        self.add_delete_recipe_to(self, request, FavoriteRecipe)
+        self.add_delete_recipe_to(request, FavoriteRecipe, pk)
 
     @action(
         methods=['POST', 'DELETE'],
@@ -171,3 +171,23 @@ class RecipesViewSet(CreateDeleteMixin, viewsets.ModelViewSet):
                 'Content-Disposition'
             ] = 'attachment; filename="shopping_list.txt"'
         return response
+
+    def add_delete_recipe_to(self, request, model, pk):
+        recipe_pk = self.kwargs.get('pk')
+        recipe = get_object_or_404(Recipe, pk=recipe_pk)
+        if request.method == 'POST':
+            serializer = FavoriteRecipeSerializer(recipe)
+            model.objects.create(user=self.request.user, recipe=recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if request.method == 'DELETE':
+            if model.objects.filter(
+                user=self.request.user, recipe=recipe
+            ).exists():
+                model.objects.get(
+                    user=self.request.user, recipe=recipe
+                ).delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {'errors': 'Рецепт отсутсвует в списке покупок'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
