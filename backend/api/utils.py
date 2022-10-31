@@ -1,11 +1,19 @@
-from api.serializers import FavoriteRecipeSerializer
 from django.shortcuts import get_object_or_404
 from recipes.models import Recipe
 from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from api.serializers import FavoriteRecipeSerializer
 
 
 class CreateDeleteMixin:
+    @action(
+        methods=['POST', 'DELETE'],
+        detail=True,
+        permission_classes=(IsAuthenticated,),
+    )
     def add_delete_recipe_to(self, request, model, pk=None):
         recipe_pk = self.kwargs.get('pk')
         recipe = get_object_or_404(Recipe, pk=recipe_pk)

@@ -126,11 +126,6 @@ class RecipesViewSet(CreateDeleteMixin, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(
-        methods=['POST', 'DELETE'],
-        detail=True,
-        permission_classes=(IsAuthenticated,),
-    )
     def favorite(self, request, pk=None):
         self.add_delete_recipe_to(self, request, FavoriteRecipe)
 
