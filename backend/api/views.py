@@ -1,13 +1,3 @@
-from api.filters import IngredientFilter, RecipeFilter
-from api.permissions import IsOwnerOrReadOnly
-from api.serializers import (
-    FollowSerializer,
-    IngredientSerializer,
-    RecipesCreateSerializer,
-    RecipesListSerializer,
-    TagSerializer,
-    UserSerializer,
-)
 from django.db.models import Exists, OuterRef, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -27,6 +17,16 @@ from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from users.models import User
 
+from api.filters import IngredientFilter, RecipeFilter
+from api.permissions import IsOwnerOrReadOnly
+from api.serializers import (
+    FollowSerializer,
+    IngredientSerializer,
+    RecipesCreateSerializer,
+    RecipesListSerializer,
+    TagSerializer,
+    UserSerializer,
+)
 from api.utils import CreateDeleteMixin
 
 
@@ -131,7 +131,7 @@ class RecipesViewSet(CreateDeleteMixin, viewsets.ModelViewSet):
         detail=True,
         permission_classes=(IsAuthenticated,),
     )
-    def favorite(self, request, pk=None):
+    def favorite(self, request):
         self.add_delete_recipe_to(self, request, FavoriteRecipe, pk=None)
 
     @action(
@@ -140,7 +140,7 @@ class RecipesViewSet(CreateDeleteMixin, viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def shopping_cart(self, request, pk=None):
-        self.add_delete_recipe_to(self, request, ShoppingCart, pk=None)
+        self.add_delete_recipe_to(self, request, ShoppingCart)
 
     @action(
         methods=['GET'], detail=False, permission_classes=(IsAuthenticated,)
