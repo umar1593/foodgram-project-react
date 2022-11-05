@@ -15,6 +15,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.validators import ValidationError
 from users.models import User
 
 from api.filters import IngredientFilter, RecipeFilter
@@ -132,9 +133,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def favorite(self, request, pk=None):
+        recipe_pk = self.kwargs.get('pk')
+        recipe = get_object_or_404(Recipe, pk=recipe_pk)
         if request.method == 'POST':
-            recipe_pk = self.kwargs.get('pk')
-            recipe = get_object_or_404(Recipe, pk=recipe_pk)
             return self.add_recipe(FavoriteRecipe, request, recipe)
         if request.method == 'DELETE':
             return self.delete_recipe(FavoriteRecipe, request, recipe)
@@ -183,9 +184,13 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return response
 
     def add_recipe(self, model, request, recipe):
+        if model.objects.filter(
+            recipe=recipe, user=self.request.user
+        ).exists():
+            raise ValidationError('Рецепт уже добавлен')
+        model.objects.create(recipe=recipe, user=self.request.user)
         serializer = FavoriteRecipeSerializer(recipe)
-        model.objects.create(user=self.request.user, recipe=recipe)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
     def delete_recipe(self, model, request, recipe):
         if model.objects.filter(
@@ -194,6 +199,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
             model.objects.get(user=self.request.user, recipe=recipe).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-            {'errors': 'Рецепт отсутсвует в списке покупок'},
+            {'errors': 'Рецепта нет в списке'},
             status=status.HTTP_400_BAD_REQUEST,
         )
