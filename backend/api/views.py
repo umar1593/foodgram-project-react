@@ -133,11 +133,13 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def favorite(self, request, pk=None):
-        recipe_pk = self.kwargs.get('pk')
-        recipe = get_object_or_404(Recipe, pk=recipe_pk)
         if request.method == 'POST':
+            recipe_pk = self.kwargs.get('pk')
+            recipe = get_object_or_404(Recipe, pk=recipe_pk)
             return self.add_recipe(FavoriteRecipe, request, recipe)
         if request.method == 'DELETE':
+            recipe_pk = self.kwargs.get('pk')
+            recipe = get_object_or_404(Recipe, pk=recipe_pk)
             return self.delete_recipe(FavoriteRecipe, request, recipe)
 
     @action(
