@@ -203,7 +203,7 @@ class FollowSerializer(serializers.ModelSerializer):
     def get_recipes(self, obj):
         queryset = Recipe.objects.filter(author=obj.author).order_by(
             '-pub_date'
-        )
+        )[:3]
         return FavoriteRecipeSerializer(queryset, many=True).data
 
     def get_recipes_count(self, obj):
